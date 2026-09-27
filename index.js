@@ -29,6 +29,7 @@ async function startBot() {
 
       transport: "raknet",
       skipPing: true,
+      raknetBackend: "jsp-raknet",
 
       version: "1.26.51",
 
