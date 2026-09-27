@@ -15,11 +15,19 @@ const client = bedrock.createClient({
   port: SERVER_PORT,
   username: BOT_NAME,
 
-  // false = Microsoft/Xbox authentication
-  // true  = offline server authentication
+  // Microsoft/Xbox authentication
   offline: false,
 
-  // Let the library discover the server protocol automatically.
+  // Use RakNet directly and skip server discovery.
+  transport: "raknet",
+  skipPing: true,
+
+  // Server is reporting Bedrock 1.26.51.
+  version: "1.26.51",
+
+  // Give the connection more time.
+  connectTimeout: 20000,
+
   followPort: false,
 
   onMsaCode: (data) => {
