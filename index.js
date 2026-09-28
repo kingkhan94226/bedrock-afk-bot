@@ -2,70 +2,35 @@ const bedrock = require("bedrock-protocol");
 
 const SERVER_HOST = "148.113.9.151";
 const SERVER_PORT = 19132;
-const BOT_NAME = "Honey Singh";
 
 console.log("=================================");
-console.log("   Bedrock AFK Bot Starting...");
+console.log("   BEDROCK RAKNET PING TEST");
 console.log("=================================");
 console.log(`Server IP: ${SERVER_HOST}`);
 console.log(`Port: ${SERVER_PORT}`);
-console.log(`Bot: ${BOT_NAME}`);
+console.log("");
 
-const client = bedrock.createClient({
+bedrock.ping({
+  transport: "raknet",
   host: SERVER_HOST,
   port: SERVER_PORT,
-  username: BOT_NAME,
-
-  offline: false,
-
-  transport: "raknet",
-  skipPing: true,
-  raknetBackend: "jsp-raknet",
-  useRaknetWorkers: false,
-
-  version: "1.26.51",
-
-  connectTimeout: 30000,
-  followPort: false,
-
-  onMsaCode: (data) => {
-    console.log("");
-    console.log("MICROSOFT LOGIN REQUIRED");
-    console.log("URL:");
-    console.log(data.verification_uri);
-    console.log("CODE:");
-    console.log(data.user_code);
-  }
-});
-
-client.on("connect", () => {
-  console.log("CONNECTED TO RAKNET");
-});
-
-client.on("session", () => {
-  console.log("SESSION ESTABLISHED");
-});
-
-client.on("join", () => {
+  timeout: 10000
+})
+.then((result) => {
   console.log("=================================");
-  console.log("✅ BOT JOINED THE SERVER!");
+  console.log("✅ RAKNET PONG RECEIVED!");
   console.log("=================================");
-});
-
-client.on("spawn", () => {
-  console.log("✅ BOT SPAWNED!");
-});
-
-client.on("kick", (reason) => {
-  console.log("KICKED:");
-  console.log(reason);
-});
-
-client.on("error", (error) => {
-  console.log("BOT ERROR:");
+  console.log("Server name:", result.name);
+  console.log("Server version:", result.version);
+  console.log("Protocol:", result.protocol);
+  console.log("Players:", result.playersOnline, "/", result.playersMax);
+  console.log("Raw:", result.raw);
+  console.log("");
+  console.log("RAKNET CONNECTION IS REACHABLE.");
+})
+.catch((error) => {
+  console.log("=================================");
+  console.log("❌ RAKNET PING FAILED");
+  console.log("=================================");
   console.log(error);
-});
-
-client.on("close", () => {
-  console.log("CONNECTION CLOSED");
 });
