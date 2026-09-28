@@ -1,101 +1,83 @@
-const dgram = require("dgram");
 const dns = require("dns").promises;
+const bedrock = require("bedrock-protocol");
 
 const SERVER_HOST = "mrmuju.progamer.me";
 const SERVER_PORT = 19132;
+const BOT_NAME = "Honey Singh";
 
-const MAGIC = Buffer.from(
-  "00ffff00fefefefefdfdfdfd12345678",
-  "hex"
-);
-
-async function testRakNet() {
+async function startBot() {
   console.log("=================================");
-  console.log("   VANILLA BEDROCK UDP TEST");
+  console.log("   Bedrock AFK Bot Starting...");
   console.log("=================================");
-  console.log(`Server: ${SERVER_HOST}:${SERVER_PORT}`);
-  console.log("");
 
-  try {
-    const address = await dns.lookup(SERVER_HOST, { family: 4 });
+  const address = await dns.lookup(SERVER_HOST, { family: 4 });
 
-    console.log("IPv4:");
-    console.log(address.address);
-    console.log("");
-    console.log("Sending RakNet ping...");
+  console.log(`Server IPv4: ${address.address}`);
+  console.log(`Port: ${SERVER_PORT}`);
+  console.log(`Bot: ${BOT_NAME}`);
 
-    const socket = dgram.createSocket("udp4");
+  const client = bedrock.createClient({
+    host: address.address,
+    port: SERVER_PORT,
+    username: BOT_NAME,
 
-    const ping = Buffer.alloc(33);
+    offline: false,
 
-    ping.writeUInt8(0x01, 0);
-    ping.writeBigUInt64BE(BigInt(Date.now()), 1);
-    MAGIC.copy(ping, 9);
+    transport: "raknet",
+    skipPing: true,
 
-    // Random client GUID
-    ping.writeBigUInt64BE(
-      BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)),
-      25
-    );
+    raknetBackend: "jsp-raknet",
+    useRaknetWorkers: false,
 
-    const timeout = setTimeout(() => {
+    version: "1.26.51",
+
+    connectTimeout: 30000,
+    followPort: false,
+
+    onMsaCode: (data) => {
       console.log("");
-      console.log("❌ NO RAKNET PONG RECEIVED");
-      console.log("Railway did not receive a UDP response from");
-      console.log(`${address.address}:${SERVER_PORT}`);
-      socket.close();
-    }, 10000);
+      console.log("MICROSOFT LOGIN REQUIRED");
+      console.log("URL:");
+      console.log(data.verification_uri);
+      console.log("CODE:");
+      console.log(data.user_code);
+    }
+  });
 
-    socket.on("message", (msg, rinfo) => {
-      clearTimeout(timeout);
+  client.on("connect", () => {
+    console.log("CONNECTED TO RAKNET");
+  });
 
-      console.log("");
-      console.log("✅ RAKNET RESPONSE RECEIVED!");
-      console.log(`From: ${rinfo.address}:${rinfo.port}`);
-      console.log(`Packet ID: 0x${msg[0].toString(16).padStart(2, "0")}`);
+  client.on("session", () => {
+    console.log("SESSION ESTABLISHED");
+  });
 
-      if (msg[0] === 0x1c) {
-        console.log("✅ VANILLA BEDROCK RAKNET PONG CONFIRMED!");
-      } else {
-        console.log("⚠️ UDP response received, but it was not an Unconnected Pong.");
-      }
+  client.on("join", () => {
+    console.log("=================================");
+    console.log("✅ BOT JOINED THE SERVER!");
+    console.log("=================================");
+  });
 
-      socket.close();
-    });
+  client.on("spawn", () => {
+    console.log("✅ BOT SPAWNED!");
+  });
 
-    socket.on("error", (error) => {
-      clearTimeout(timeout);
-      console.log("");
-      console.log("❌ UDP SOCKET ERROR:");
-      console.log(error);
-      socket.close();
-    });
+  client.on("kick", (reason) => {
+    console.log("KICKED:");
+    console.log(reason);
+  });
 
-    socket.send(
-      ping,
-      0,
-      ping.length,
-      SERVER_PORT,
-      address.address,
-      (error) => {
-        if (error) {
-          clearTimeout(timeout);
-          console.log("");
-          console.log("❌ UDP SEND ERROR:");
-          console.log(error);
-          socket.close();
-        } else {
-          console.log("Ping sent successfully.");
-          console.log("Waiting up to 10 seconds for Pong...");
-        }
-      }
-    );
-
-  } catch (error) {
-    console.log("");
-    console.log("❌ DNS ERROR:");
+  client.on("error", (error) => {
+    console.log("BOT ERROR:");
     console.log(error);
-  }
+  });
+
+  client.on("close", () => {
+    console.log("CONNECTION CLOSED");
+  });
 }
 
-testRakNet();
+startBot().catch((error) => {
+  console.log("STARTUP ERROR:");
+  console.log(error);
+});
