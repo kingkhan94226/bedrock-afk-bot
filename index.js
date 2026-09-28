@@ -1,7 +1,7 @@
 const bedrock = require("bedrock-protocol");
 
-const SERVER_HOST = "148.113.9.151";
-const SERVER_PORT = 19132;
+const SERVER_HOST = "mrmuju.progamer.me";
+const SERVER_PORT = 29443;
 
 console.log("=================================");
 console.log("   BEDROCK RAKNET PING TEST");
