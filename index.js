@@ -20,9 +20,9 @@ const client = bedrock.createClient({
 
   transport: "raknet",
   skipPing: true,
-
-  raknetBackend: "jsp-raknet",
-  useRaknetWorkers: false,
+  
+raknetBackend: "raknet-native",
+useRaknetWorkers: false,
 
   version: "1.26.51",
 
