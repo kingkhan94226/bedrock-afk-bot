@@ -1,87 +1,103 @@
-const bedrock = require("bedrock-protocol");
+'use strict'
 
-const SERVER_HOST = "mrmuju.progamer.me";
-const SERVER_PORT = 29443;
-const BOT_NAME    = "Honey Singh";
+const bedrock = require('bedrock-protocol')
 
-console.log("=================================");
-console.log("   Bedrock AFK Bot Starting...");
-console.log("=================================");
-console.log(`Server : ${SERVER_HOST}:${SERVER_PORT}`);
-console.log(`Bot    : ${BOT_NAME}`);
-console.log(`Transport: NetherNet (WebRTC via Xbox Live)`);
+// ─── Server & bot configuration ───────────────────────────────────────────────
+const HOST = 'mrmuju.progamer.me'
+const PORT = 29443
+const USERNAME = 'Honey Singh'
 
+// ─── Startup banner ───────────────────────────────────────────────────────────
+console.log('=======================================================')
+console.log('  Minecraft Bedrock AFK Bot')
+console.log('=======================================================')
+console.log(`  Bot name : ${USERNAME}`)
+console.log(`  Server   : ${HOST}:${PORT}`)
+console.log('  Auth     : Microsoft / Xbox Live (online mode)')
+console.log('  Transport: auto-discovery (RakNet or NetherNet)')
+console.log('=======================================================')
+console.log('')
+console.log('[startup] Initialising client and starting authentication...')
+
+// ─── Create client ────────────────────────────────────────────────────────────
 const client = bedrock.createClient({
-  host    : SERVER_HOST,
-  port    : SERVER_PORT,
-  username: BOT_NAME,
+  host: HOST,
+  port: PORT,
+  username: USERNAME,
+  offline: false,
+  onMsaCode (data) {
+    console.log('')
+    console.log('[auth] Microsoft login required.')
+    console.log(`[auth] Open this URL in your browser : ${data.verification_uri}`)
+    console.log(`[auth] Enter this code               : ${data.user_code}`)
+    console.log('[auth] Waiting for you to complete sign-in...')
+    console.log('')
+  }
+})
 
-  // ─── TRANSPORT ───────────────────────────────────────────────
-  // Your server is Bedrock 1.26.51+ which uses NetherNet by default.
-  // NetherNet works over WebRTC/TCP — NOT UDP.
-  // Setting transport:"raknet" sends UDP which has NO listener → timeout.
-  transport: "nethernet",
-  nethernet: {
-    signalling: "services",   // use Xbox Live cloud signalling (not LAN)
-  },
-  // ─────────────────────────────────────────────────────────────
+// ─── Transport / version resolved ─────────────────────────────────────────────
+client.on('connect_allowed', () => {
+  console.log('[connect_allowed] Server responded to discovery ping.')
+  console.log(`[connect_allowed] Resolved transport : ${client.options.transport ?? 'unknown'}`)
+  console.log(`[connect_allowed] Resolved version   : ${client.options.version ?? 'unknown'}`)
+  console.log(`[connect_allowed] Connecting to      : ${client.options.host}:${client.options.port}`)
+})
 
-  // Microsoft auth is required for NetherNet (Xbox Live signalling needs it)
-  offline : false,
+// ─── Session established (auth + encryption done) ─────────────────────────────
+client.on('session', (session) => {
+  console.log('[session] Authentication and encryption complete.')
+  if (session && session.profile) {
+    console.log(`[session] Xbox Gamertag : ${session.profile.name}`)
+    console.log(`[session] XUID          : ${session.profile.xuid ?? 'n/a'}`)
+  }
+})
 
-  // Version: 1.26.51 is the current default in bedrock-protocol 3.60.1
-  // Omit it here and let the library auto-detect from server advertisement
-  // (or set it explicitly if auto-detect fails)
-  // version: "1.26.51",
+// ─── Joined (handshake complete, ready for game packets) ──────────────────────
+client.on('join', () => {
+  console.log('[join] Successfully joined the server. Game packets active.')
+})
 
-  // Give the signalling + WebRTC handshake enough time
-  connectTimeout             : 30000,  // 30s for WebRTC transport setup
-  // nethernet.signallingConnectTimeout defaults to 15000ms (fine)
+// ─── Spawned (chunks received, player is in the world) ────────────────────────
+client.on('spawn', () => {
+  console.log('[spawn] Bot has spawned into the world. AFK hold active.')
+})
 
-  // Microsoft Device Code auth callback
-  onMsaCode: (data) => {
-    console.log("");
-    console.log("========================================");
-    console.log("  MICROSOFT LOGIN REQUIRED");
-    console.log("========================================");
-    console.log("  1. Open this URL in your browser:");
-    console.log("    ", data.verification_uri);
-    console.log("  2. Enter this code:");
-    console.log("    ", data.user_code);
-    console.log("========================================");
-    console.log("  Waiting for you to complete login...");
-    console.log("");
-  },
-});
+// ─── Heartbeat (keep-alive confirmed) ─────────────────────────────────────────
+client.on('heartbeat', (responseTime) => {
+  console.log(`[heartbeat] Keep-alive confirmed. Server response time: ${responseTime}`)
+})
 
-client.on("connect", () => {
-  console.log("[+] RakNet/NetherNet transport layer connected");
-});
+// ─── Kicked ───────────────────────────────────────────────────────────────────
+client.on('kick', (reason) => {
+  console.error('[kick] Bot was kicked from the server.')
+  try {
+    const parsed = typeof reason === 'string' ? JSON.parse(reason) : reason
+    console.error('[kick] Reason:', JSON.stringify(parsed, null, 2))
+  } catch {
+    console.error('[kick] Reason:', reason)
+  }
+})
 
-client.on("session", () => {
-  console.log("[+] Session established (Xbox auth complete)");
-});
+// ─── Error ────────────────────────────────────────────────────────────────────
+client.on('error', (err) => {
+  console.error('[error] A client error occurred.')
+  console.error('[error] Message:', err.message ?? err)
+  if (err.stack) console.error('[error] Stack:\n', err.stack)
+})
 
-client.on("join", () => {
-  console.log("=================================");
-  console.log("✅  BOT JOINED THE SERVER!");
-  console.log("=================================");
-});
+// ─── Connection closed ────────────────────────────────────────────────────────
+client.on('close', () => {
+  console.log('[close] Connection to server has been closed.')
+})
 
-client.on("spawn", () => {
-  console.log("✅  BOT SPAWNED IN THE WORLD");
-});
-
-client.on("kick", (reason) => {
-  console.log("⛔  KICKED:");
-  console.log(JSON.stringify(reason, null, 2));
-});
-
-client.on("error", (error) => {
-  console.log("❌  BOT ERROR:");
-  console.log(error.message || error);
-});
-
-client.on("close", () => {
-  console.log("🔌  CONNECTION CLOSED");
-});
+// ─── Graceful shutdown on SIGINT (Ctrl+C) ─────────────────────────────────────
+process.on('SIGINT', () => {
+  console.log('')
+  console.log('[shutdown] SIGINT received. Closing connection...')
+  try {
+    client.close()
+  } catch (err) {
+    // ignore errors during shutdown
+  }
+  process.exit(0)
+})
