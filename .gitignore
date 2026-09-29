@@ -1,4 +1,8 @@
 node_modules/
 .minecraft/
+
 .env
+.env.local
+
+# Logs
 *.log
