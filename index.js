@@ -13,7 +13,7 @@ const USERNAME = 'Honey Singh'
 // independently confirmed by the RakNet ping test that returned "FAILED".
 // Pin this to the actual server version shown in-game or on the panel.
 // 1.26.51 is the CURRENT_VERSION in bedrock-protocol 3.60.1.
-const VERSION = '1.26.51'
+const VERSION = '1.26.52'
 
 // ─── Reconnect settings ───────────────────────────────────────────────────────
 const RECONNECT_BASE_DELAY_MS = 5_000
@@ -88,10 +88,9 @@ function createBot () {
     offline: false,
 
     // ── Critical fixes (see comments above) ──────────────────────────────────
-    skipPing: true,               // proxy blocks RakNet pings; skip discovery
-    transport: 'raknet',          // explicit RakNet (no accidental NetherNet)
-    version: VERSION,             // pin version; no ping = no auto-detection
-    raknetBackend: 'jsp-raknet',  // pure-JS backend; no cmake/compiler needed
+    skipPing: true,
+transport: 'nethernet',
+version: VERSION,
     connectTimeout: 15_000,       // 15 s; Railway WAN + proxy hop needs room
     // ─────────────────────────────────────────────────────────────────────────
 
